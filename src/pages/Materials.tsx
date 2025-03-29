@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useStudyMaterials } from "@/contexts/StudyMaterialsContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,7 +56,7 @@ const Materials = () => {
           subject,
           category,
           description,
-          fileUrl: URL.createObjectURL(file), // In a real app, this would be an uploaded file URL
+          fileUrl: URL.createObjectURL(file),
           fileName: file.name,
           uploadedBy: {
             id: user.id,
@@ -65,7 +64,6 @@ const Materials = () => {
           }
         });
         
-        // Reset form and close dialog
         setTitle("");
         setSubject("");
         setCategory("");
@@ -80,130 +78,145 @@ const Materials = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Study Materials</h1>
-        <div className="flex items-center space-x-2 w-full md:w-auto">
-          <div className="relative flex-grow md:flex-grow-0 md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-1">
+              <Plus className="h-4 w-4" />
+              <span className="hidden md:inline">Upload</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Upload Study Material</DialogTitle>
+              <DialogDescription>
+                Share your study materials with other students.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleSubmit} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter a descriptive title"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Select value={subject} onValueChange={setSubject}>
+                    <SelectTrigger id="subject">
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.filter(s => s !== "All Subjects").map((subj) => (
+                        <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.filter(c => c !== "All Categories").map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe your study material"
+                  className="min-h-[100px]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="file">Upload File</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFile(e.target.files[0]);
+                    }
+                  }}
+                />
+                {file && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected file: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+              
+              {uploadError && (
+                <div className="text-sm text-destructive">
+                  {uploadError}
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Uploading..." : "Upload Material"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      
+      {/* Centered Search Section */}
+      <div className="max-w-3xl mx-auto mb-12">
+        <div className="flex flex-col items-center space-y-4">
+          <h2 className="text-lg md:text-xl font-medium text-center mb-2">Find the perfect study material</h2>
+          
+          <div className="relative w-full max-w-xl">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search materials..."
+              placeholder="Search by title, subject, or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 py-6 text-base"
             />
           </div>
-          <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
-            <Filter className="h-4 w-4" />
-          </Button>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-1">
-                <Plus className="h-4 w-4" />
-                <span className="hidden md:inline">Upload</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Upload Study Material</DialogTitle>
-                <DialogDescription>
-                  Share your study materials with other students.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter a descriptive title"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject</Label>
-                    <Select value={subject} onValueChange={setSubject}>
-                      <SelectTrigger id="subject">
-                        <SelectValue placeholder="Select subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subjects.filter(s => s !== "All Subjects").map((subj) => (
-                          <SelectItem key={subj} value={subj}>{subj}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger id="category">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.filter(c => c !== "All Categories").map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe your study material"
-                    className="min-h-[100px]"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="file">Upload File</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setFile(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  {file && (
-                    <p className="text-xs text-muted-foreground">
-                      Selected file: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                </div>
-                
-                {uploadError && (
-                  <div className="text-sm text-destructive">
-                    {uploadError}
-                  </div>
-                )}
-                
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? "Uploading..." : "Upload Material"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-1"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </Button>
+          </div>
         </div>
       </div>
       
       {showFilters && (
-        <div className="bg-secondary/50 rounded-lg p-4 mb-6 animate-fadeIn">
+        <div className="bg-secondary/50 rounded-lg p-4 mb-6 animate-fadeIn max-w-3xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="subjectFilter" className="mb-2 block">Subject</Label>
