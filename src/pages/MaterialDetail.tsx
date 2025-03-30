@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Eye, Download, BookmarkIcon, ArrowLeft, Trash2, Send } from "lucide-react";
+import { Star, Download, BookmarkIcon, ArrowLeft, Trash2, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const MaterialDetail = () => {
@@ -31,11 +31,14 @@ const MaterialDetail = () => {
     incrementViews, 
     incrementDownloads, 
     addComment, 
-    deleteMaterial 
+    deleteMaterial,
+    rateMaterial 
   } = useStudyMaterials();
   const { user, isAuthenticated } = useAuth();
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   
   const material = materials.find(m => m.id === id);
   const isBookmarked = bookmarks.includes(id || "");
@@ -67,6 +70,13 @@ const MaterialDetail = () => {
     // In a real app, this would initiate a file download
   };
   
+  const handleRatingSubmit = (rating: number) => {
+    if (user && material) {
+      rateMaterial(material.id, rating, user.id);
+      setUserRating(rating);
+    }
+  };
+  
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -91,6 +101,37 @@ const MaterialDetail = () => {
     } catch (error) {
       console.error("Failed to delete material:", error);
     }
+  };
+  
+  const renderStarRating = () => {
+    return (
+      <div className="flex items-center space-x-1 mb-4">
+        <span className="text-sm mr-2">Rate this material: </span>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            className="focus:outline-none"
+            onClick={() => handleRatingSubmit(star)}
+            onMouseEnter={() => setHoverRating(star)}
+            onMouseLeave={() => setHoverRating(0)}
+          >
+            <Star
+              className={`h-5 w-5 ${
+                (hoverRating || userRating) >= star
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-muted-foreground"
+              }`}
+            />
+          </button>
+        ))}
+        <span className="text-sm ml-2">
+          {material.averageRating 
+            ? `${material.averageRating.toFixed(1)} (${material.ratings?.length || 0} ratings)` 
+            : "No ratings yet"}
+        </span>
+      </div>
+    );
   };
   
   return (
@@ -161,14 +202,12 @@ const MaterialDetail = () => {
             
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-1">
-                <Eye className="h-4 w-4" />
-                <span>{material.views} views</span>
-              </div>
-              <div className="flex items-center space-x-1">
                 <Download className="h-4 w-4" />
                 <span>{material.downloads} downloads</span>
               </div>
             </div>
+            
+            {isAuthenticated && renderStarRating()}
           </div>
           
           <div className="bg-card p-6 rounded-lg">
@@ -259,10 +298,6 @@ const MaterialDetail = () => {
                   <span className="font-medium">{material.category}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Views:</span>
-                  <span className="font-medium">{material.views}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted-foreground">Downloads:</span>
                   <span className="font-medium">{material.downloads}</span>
                 </div>
@@ -270,6 +305,15 @@ const MaterialDetail = () => {
                   <span className="text-muted-foreground">Comments:</span>
                   <span className="font-medium">{material.comments.length}</span>
                 </div>
+                {material.averageRating > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Average Rating:</span>
+                    <span className="font-medium flex items-center">
+                      {material.averageRating.toFixed(1)}
+                      <Star className="h-4 w-4 ml-1 text-yellow-400 fill-yellow-400" />
+                    </span>
+                  </div>
+                )}
               </div>
               
               <div className="mt-6">

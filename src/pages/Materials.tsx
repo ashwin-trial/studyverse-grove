@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useStudyMaterials } from "@/contexts/StudyMaterialsContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,38 +12,52 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Filter } from "lucide-react";
 
 const subjects = ["All Subjects", "Computer Science", "Mathematics", "Physics", "Chemistry", "Biology", "History", "Literature", "Economics"];
-const categories = ["All Categories", "Notes", "Assignment", "Quiz", "Exam", "Project", "Lab Report", "Tutorial", "Programming"];
+const filterOptions = ["All", "Highest Rated", "Newest Upload", "Most Comments", "Most Downloaded"];
 
 const Materials = () => {
   const { materials, addMaterial, isLoading } = useStudyMaterials();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All Subjects");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedFilter, setSelectedFilter] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
   
-  const filteredMaterials = materials.filter(material => {
-    const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  // Filter and sort materials based on search, subject, and selected filter
+  const filteredMaterials = materials
+    .filter(material => {
+      const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           material.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSubject = selectedSubject === "All Subjects" || material.subject === selectedSubject;
-    const matchesCategory = selectedCategory === "All Categories" || material.category === selectedCategory;
-    
-    return matchesSearch && matchesSubject && matchesCategory;
-  });
+      const matchesSubject = selectedSubject === "All Subjects" || material.subject === selectedSubject;
+      
+      return matchesSearch && matchesSubject;
+    })
+    .sort((a, b) => {
+      switch (selectedFilter) {
+        case "Highest Rated":
+          return (b.averageRating || 0) - (a.averageRating || 0);
+        case "Newest Upload":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "Most Comments":
+          return b.comments.length - a.comments.length;
+        case "Most Downloaded":
+          return b.downloads - a.downloads;
+        default:
+          return 0;
+      }
+    });
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploadError("");
     
-    if (!title || !subject || !category || !description || !file) {
+    if (!title || !subject || !description || !file) {
       setUploadError("Please fill in all fields and upload a file");
       return;
     }
@@ -52,7 +67,7 @@ const Materials = () => {
         await addMaterial({
           title,
           subject,
-          category,
+          category: "General", // Default category since we're removing the field
           description,
           fileUrl: URL.createObjectURL(file),
           fileName: file.name,
@@ -64,7 +79,6 @@ const Materials = () => {
         
         setTitle("");
         setSubject("");
-        setCategory("");
         setDescription("");
         setFile(null);
         setIsDialogOpen(false);
@@ -105,34 +119,18 @@ const Materials = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Select value={subject} onValueChange={setSubject}>
-                    <SelectTrigger id="subject">
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subjects.filter(s => s !== "All Subjects").map((subj) => (
-                        <SelectItem key={subj} value={subj}>{subj}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.filter(c => c !== "All Categories").map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger id="subject">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.filter(s => s !== "All Subjects").map((subj) => (
+                      <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -230,14 +228,14 @@ const Materials = () => {
             </div>
             
             <div>
-              <Label htmlFor="categoryFilter" className="mb-2 block">Category</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="categoryFilter">
-                  <SelectValue placeholder="Select category" />
+              <Label htmlFor="sortFilter" className="mb-2 block">Sort By</Label>
+              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                <SelectTrigger id="sortFilter">
+                  <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  {filterOptions.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
