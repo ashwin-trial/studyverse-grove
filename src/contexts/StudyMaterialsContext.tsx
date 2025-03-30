@@ -18,6 +18,8 @@ export interface StudyMaterial {
   views: number;
   downloads: number;
   comments: Comment[];
+  ratings?: Rating[];
+  averageRating?: number;
 }
 
 export interface Comment {
@@ -30,17 +32,23 @@ export interface Comment {
   createdAt: string;
 }
 
+export interface Rating {
+  userId: string;
+  rating: number;
+}
+
 interface StudyMaterialsContextType {
   materials: StudyMaterial[];
   bookmarks: string[];
   isLoading: boolean;
-  addMaterial: (material: Omit<StudyMaterial, "id" | "createdAt" | "views" | "downloads" | "comments">) => Promise<void>;
+  addMaterial: (material: Omit<StudyMaterial, "id" | "createdAt" | "views" | "downloads" | "comments" | "ratings" | "averageRating">) => Promise<void>;
   toggleBookmark: (materialId: string) => void;
   addComment: (materialId: string, text: string, userId: string, userName: string) => Promise<void>;
   deleteMaterial: (materialId: string) => Promise<void>;
   incrementViews: (materialId: string) => void;
   incrementDownloads: (materialId: string) => void;
   getUserMaterials: (userId: string) => StudyMaterial[];
+  rateMaterial: (materialId: string, rating: number, userId: string) => void;
 }
 
 // Mock data
@@ -70,7 +78,12 @@ const mockMaterials: StudyMaterial[] = [
         },
         createdAt: new Date().toISOString()
       }
-    ]
+    ],
+    ratings: [
+      { userId: "2", rating: 5 },
+      { userId: "3", rating: 4 }
+    ],
+    averageRating: 4.5
   },
   {
     id: "2",
@@ -87,7 +100,12 @@ const mockMaterials: StudyMaterial[] = [
     createdAt: new Date().toISOString(),
     views: 85,
     downloads: 32,
-    comments: []
+    comments: [],
+    ratings: [
+      { userId: "1", rating: 4 },
+      { userId: "4", rating: 3 }
+    ],
+    averageRating: 3.5
   },
   {
     id: "3",
@@ -123,7 +141,13 @@ const mockMaterials: StudyMaterial[] = [
         },
         createdAt: new Date().toISOString()
       }
-    ]
+    ],
+    ratings: [
+      { userId: "1", rating: 5 },
+      { userId: "2", rating: 5 },
+      { userId: "4", rating: 4 }
+    ],
+    averageRating: 4.67
   }
 ];
 
@@ -149,7 +173,7 @@ export const StudyMaterialsProvider: React.FC<{ children: React.ReactNode }> = (
     localStorage.setItem("bookmarks", JSON.stringify(newBookmarks));
   };
 
-  const addMaterial = async (material: Omit<StudyMaterial, "id" | "createdAt" | "views" | "downloads" | "comments">) => {
+  const addMaterial = async (material: Omit<StudyMaterial, "id" | "createdAt" | "views" | "downloads" | "comments" | "ratings" | "averageRating">) => {
     setIsLoading(true);
     
     try {
@@ -162,7 +186,9 @@ export const StudyMaterialsProvider: React.FC<{ children: React.ReactNode }> = (
         createdAt: new Date().toISOString(),
         views: 0,
         downloads: 0,
-        comments: []
+        comments: [],
+        ratings: [],
+        averageRating: 0
       };
       
       setMaterials(prev => [newMaterial, ...prev]);
@@ -245,6 +271,42 @@ export const StudyMaterialsProvider: React.FC<{ children: React.ReactNode }> = (
     }
   };
 
+  const rateMaterial = (materialId: string, rating: number, userId: string) => {
+    setMaterials(prev => 
+      prev.map(material => {
+        if (material.id !== materialId) return material;
+        
+        // Create a copy of the ratings array or initialize it if it doesn't exist
+        const ratings = material.ratings ? [...material.ratings] : [];
+        
+        // Find if the user has already rated this material
+        const existingRatingIndex = ratings.findIndex(r => r.userId === userId);
+        
+        if (existingRatingIndex >= 0) {
+          // Update existing rating
+          ratings[existingRatingIndex] = { userId, rating };
+        } else {
+          // Add new rating
+          ratings.push({ userId, rating });
+        }
+        
+        // Calculate the new average rating
+        const averageRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+        
+        toast({
+          title: "Rating submitted",
+          description: "Thank you for rating this material!",
+        });
+        
+        return { 
+          ...material, 
+          ratings, 
+          averageRating 
+        };
+      })
+    );
+  };
+
   const deleteMaterial = async (materialId: string) => {
     setIsLoading(true);
     
@@ -318,7 +380,8 @@ export const StudyMaterialsProvider: React.FC<{ children: React.ReactNode }> = (
         deleteMaterial,
         incrementViews,
         incrementDownloads,
-        getUserMaterials
+        getUserMaterials,
+        rateMaterial
       }}
     >
       {children}

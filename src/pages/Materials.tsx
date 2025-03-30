@@ -41,7 +41,7 @@ const Materials = () => {
     .sort((a, b) => {
       switch (selectedFilter) {
         case "Highest Rated":
-          return (b.averageRating || 0) - (a.averageRating || 0);
+          return ((b.averageRating || 0) - (a.averageRating || 0));
         case "Newest Upload":
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case "Most Comments":
