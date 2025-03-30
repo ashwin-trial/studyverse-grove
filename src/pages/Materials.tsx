@@ -21,7 +21,6 @@ const Materials = () => {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [showFilters, setShowFilters] = useState(false);
   
-  // Upload form state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
@@ -30,7 +29,6 @@ const Materials = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
   
-  // Filter materials based on search and filters
   const filteredMaterials = materials.filter(material => {
     const matchesSearch = material.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           material.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -185,7 +183,6 @@ const Materials = () => {
         </Dialog>
       </div>
       
-      {/* Centered Search Section */}
       <div className="max-w-3xl mx-auto mb-12">
         <div className="flex flex-col items-center space-y-4">
           <h2 className="text-lg md:text-xl font-medium text-center mb-2">Find the perfect study material</h2>
