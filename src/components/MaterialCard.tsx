@@ -50,9 +50,6 @@ const MaterialCard = ({ material }: MaterialCardProps) => {
             <Badge variant="outline" className="bg-secondary/50">
               {material.subject}
             </Badge>
-            <Badge variant="outline" className="bg-secondary/50">
-              {material.category}
-            </Badge>
           </div>
         </CardHeader>
         

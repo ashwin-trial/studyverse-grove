@@ -37,10 +37,6 @@ export const MaterialSidebar = ({
               <span className="font-medium">{material.subject}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Category:</span>
-              <span className="font-medium">{material.category}</span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-muted-foreground">Downloads:</span>
               <span className="font-medium">{material.downloads}</span>
             </div>
@@ -53,7 +49,7 @@ export const MaterialSidebar = ({
                 <span className="text-muted-foreground">Average Rating:</span>
                 <span className="font-medium flex items-center">
                   {material.averageRating.toFixed(1)}
-                  <Star className="h-4 w-4 ml-1 text-yellow-400 fill-yellow-400" />
+                  <Star className="h-4 w-4 ml-1 text-accent fill-accent" />
                 </span>
               </div>
             )}
@@ -81,7 +77,7 @@ export const MaterialSidebar = ({
                 >
                   <h3 className="font-medium line-clamp-1">{relatedMaterial.title}</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {relatedMaterial.subject} • {relatedMaterial.category}
+                    {relatedMaterial.subject}
                   </p>
                 </div>
               ))

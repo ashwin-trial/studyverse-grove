@@ -16,7 +16,7 @@ const SearchBar = ({ searchTerm, setSearchTerm }: SearchBarProps) => {
         placeholder="Search by title, subject, or description..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10 py-6 text-base"
+        className="pl-10 py-6 text-base border-accent/30 focus:border-accent focus-visible:ring-1 focus-visible:ring-accent"
       />
     </div>
   );
